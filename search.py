@@ -1,6 +1,13 @@
 # from paramiko import SSHClient
 import paramiko
+import mysql.connector
 
+# database informations
+database_host='localhost',
+database_user='root',
+database_password=''
+
+# host connection
 host = "138.0.233.24"
 port = 22
 username = "ora"
@@ -14,15 +21,12 @@ community = 'W1r3l1nk'
 ip = '172.31.3.106'
 oids = 'iso.3.6.1.4.1.2011.5.25.191.2.1.1.8'
 
-command = f'snmpwalk -v2c -c {community} {ip} {oids} | grep peer'
-filterByDescription = f'{command} | grep description'
-
-stdin, stdout, stderr = ssh.exec_command(command)
-searchResult = stdout.readlines()
-
-print(searchResult[0])
-print(searchResult[1])
-print(searchResult[2])
+gadgets = [
+  {
+    'community': 'W1r3l1nk',
+    'ip': '172.31.3.106'
+  }
+]
 
 def getID(searchResult, oids):
   """
@@ -59,15 +63,85 @@ def getInformations(searchResult, filterString):
   peer = getPeer(searchResult)
   content = getContent(searchResult, filterString)
 
-  print(f'{filterString}\nid: {searchID}\npeer: {peer}\ncontent: {content}\n')
+  # print(f'{filterString}\nid: {searchID}\npeer: {peer}\ncontent: {content}\n')
 
-print(f'ip:\n{ip}\n')
+  return {
+    'id': searchID,
+    'peer': peer,
+    'content': content
+  }
 
-asNumber = searchResult[0]
-getInformations(asNumber, 'as-number')
+def runFilter(command, filter):
+  """
+  
+  """
+  filter = f'{command} | grep {filter}'
+  stdin, stdout, stderr = ssh.exec_command(filter)
+  searchResult = stdout.readlines()
 
-description = searchResult[1]
-getInformations(description, 'description')
+  return searchResult
 
-connectInterface = searchResult[2]
-getInformations(connectInterface, 'connect-interface')
+def searchWithPeer(peer, arraySearch):
+  for search in arraySearch:
+    if peer in search:
+      return search
+
+def informationPerPeer(descriptionArraySearch, asNumberArraySearch, connectInterfaceArraySearch):
+  for descriptionSearch in descriptionArraySearch:
+    peer = getPeer(descriptionSearch)
+
+    descriptionToPeer = searchWithPeer(peer, descriptionArraySearch)
+    informatonsDescription = getInformations(descriptionToPeer, 'description')
+
+    asNumberToPeer = searchWithPeer(peer, asNumberArraySearch)
+    informationsAsNumber = getInformations(asNumberToPeer, 'as-number')
+
+    connectInterfaceToPeer = searchWithPeer(peer, connectInterfaceArraySearch)
+    informationsConnectInterface = getInformations(connectInterfaceToPeer, 'connect-interface')
+
+    return {
+      'description': informatonsDescription,
+      'as-number': informationsAsNumber,
+      'connect-interface': informationsConnectInterface
+    }
+
+    print('\n')
+  
+def runRoutine(command):
+  descriptionSearch = runFilter(command, 'description')
+  asNumberSearch = runFilter(command, 'as-number')
+  connectInterfaceSearch = runFilter(command, 'connect-interface')
+
+  return informationPerPeer(descriptionSearch, asNumberSearch, connectInterfaceSearch)
+
+def runCommands():
+  """
+  run three comands to get informations
+  """
+
+  for gadget in gadgets:
+    command = f'snmpwalk -v2c -c {gadget["community"]} {gadget["ip"]} iso.3.6.1.4.1.2011.5.25.191.2.1.1.8 | grep peer'
+    
+    result = runRoutine(command)
+    print(result)
+
+runCommands()
+
+# command = f'snmpwalk -v2c -c {community} {ip} iso.3.6.1.4.1.2011.5.25.191.2.1.1.8 | grep peer'
+# filterByDescription = f'{command} | grep description'
+# filterByAsNumber = f'{command} | grep as-number'
+# filterByConnectInterface = f'{command} | grep connect-interface'
+
+# stdin, stdout, stderr = ssh.exec_command(command)
+# searchResult = stdout.readlines()
+
+# print(f'ip:\n{ip}\n')
+
+# asNumber = searchResult[0]
+# getInformations(asNumber, 'as-number')
+
+# description = searchResult[1]
+# getInformations(description, 'description')
+
+# connectInterface = searchResult[2]
+# getInformations(connectInterface, 'connect-interface')

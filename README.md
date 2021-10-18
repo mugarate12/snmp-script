@@ -10,11 +10,17 @@ script to get informations, run this script in your local machine and this conne
 
 ## Requirements
 - **[paramiko](https://www.paramiko.org/)**
+- **[mysql connect](https://dev.mysql.com/doc/connector-python/en/)**
 
 ## Installation
 install paramiko library
 ```bash
 python -m pip install paramiko
+```
+
+install mysql connector library
+```bash
+python -m pip install mysql.connector
 ```
 
 ## Run Script
