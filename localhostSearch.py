@@ -5,7 +5,7 @@ from mysql.connector import errorcode
 # database informations
 database_host = 'localhost'
 database_user= 'root'
-database_password= 'majuge123'
+database_password= ''
 
 community = 'W1r3l1nk'
 ip = '172.31.3.106'

@@ -2,11 +2,13 @@
 import paramiko
 import mysql.connector
 from mysql.connector import errorcode
+import mariadb
 
 # database informations
 database_host = 'localhost'
 database_user= 'root'
 database_password= 'majuge123'
+database_port = 3307
 
 # host connection
 host = "138.0.233.24"
@@ -135,7 +137,8 @@ def runCommands():
     conn = mysql.connector.connect(
       user=database_user,
       password=database_password,
-      host=database_host
+      host=database_host,
+      port=database_port
     )
 
     try:
