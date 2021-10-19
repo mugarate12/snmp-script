@@ -1,7 +1,5 @@
 # from paramiko import SSHClient
 import paramiko
-import mysql.connector
-from mysql.connector import errorcode
 import mariadb
 
 # database informations
@@ -136,7 +134,7 @@ def runCommands():
     tableName = 'equipamentos'
 
     try:
-      conn = mysql.connector.connect(
+      conn = mariadb.connect(
         user=database_user,
         password=database_password,
         host=database_host,
