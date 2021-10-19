@@ -3,6 +3,7 @@
 - [Overview](#overview)
 - [Requirements](#requirements)
 - [Installation](#installation)
+- [Tests](#tests)
 - [Run Script](#run-script)
 
 ## Overview
@@ -30,7 +31,13 @@ python -m pip install mysql.connector
 python -m pip install mysql-connector-python
 ```
 
-## Run Script
+## Tests
+run script to connect to SSH and insert data to local host database
 ```bash
 python search.py
+```
+
+## Run Script
+```bash
+python localhostSearch.py
 ```
