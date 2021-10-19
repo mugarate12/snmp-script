@@ -134,22 +134,16 @@ def runCommands():
 
     databaseName = 'sw_hws6730'
     tableName = 'equipamentos'
-    conn = mysql.connector.connect(
-      user=database_user,
-      password=database_password,
-      host=database_host,
-      port=database_port
-    )
 
     try:
-      conn
+      conn = mysql.connector.connect(
+        user=database_user,
+        password=database_password,
+        host=database_host,
+        port=database_port
+      )
       print('connection with database ok')
-    except mysql.connector.Error as err:
-      if err.errno == errorcode.ER_ACESS_DANIED_ERROR:
-        print('user or password of database wrong')
-      elif err.errno == errorcode.ER_BAD_DB_ERROR:
-        print('database not exists')
-      else:
+    except mariadb.Error as err:
         print(err)
     else:
         cursor = conn.cursor()
@@ -201,9 +195,20 @@ def runCommands():
       cursor.execute(verifyExistsRegistry)
       registry = cursor.fetchone()
 
-      print(f'lastGadgetIndex: {lastGadgetIndex}')
-
       if registry != None:
+        registryAsNumber = registry[4]
+        registryDescription = registry[5]
+        registryConnectInterface = registry[6]
+
+        if (asNumber != registryAsNumber or description != registryDescription or connectInterface != registryConnectInterface):
+          updateItem = f"""UPDATE {tableName}
+                        SET as_number='{registryAsNumber}',
+                        description='{registryDescription}'
+                        connect_interface='{registryConnectInterface}'
+                        WHERE ip='{ip}' and peer='{peer}';
+                      """
+          cursor.execute(updateItem)
+
         continue
 
       createItem = f"""INSERT INTO {tableName}
@@ -213,6 +218,8 @@ def runCommands():
                   """
       cursor.execute(createItem)
       conn.commit()
+
+    print('dados atualizados')  
     
     cursor.close()
     conn.close()  

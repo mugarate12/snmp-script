@@ -18,6 +18,13 @@ script to get informations, run this script in your local machine and this conne
 - **[mysql connector python]()**
 
 ## Installation
+### If necessary
+after connect to maria db on terminal, run:
+```bash
+SHOW GLOBAL VARIABLES LIKE 'PORT';
+```
+
+
 ### only Tests:
 
 #### Windows
