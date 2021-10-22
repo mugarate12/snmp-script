@@ -142,6 +142,15 @@ def createTable(cursor, tableName):
              """
   cursor.execute(createTable)
 
+def alterTable(cursor, tableName):
+  """
+  alter table to modify 'equipamento' field from int to varchar(200)
+  """
+  alterTableQuery = f"""ALTER TABLE {tableName}
+                        MODIFY equipamento varchar(200);
+                  """
+  cursor.execute(alterTableQuery)
+
 def getRegistry(cursor, tableName, ip, peer):
   """
   get registry of gadget with ip and peer
@@ -196,6 +205,8 @@ def runCommands():
     createDatabase(cursor, databaseName)
 
     createTable(cursor, tableName)
+
+    alterTable(cursor, tableName)
 
     for information in informations:
       peer = information['description']['peer']
