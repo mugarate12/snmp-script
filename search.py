@@ -24,6 +24,7 @@ oids = 'iso.3.6.1.4.1.2011.5.25.191.2.1.1.8'
 
 gadgets = [
   {
+    'equipamento': 'Fran',
     'community': 'W1r3l1nk',
     'ip': '172.31.3.106'
   }
@@ -119,6 +120,52 @@ def runRoutine(command):
 
   return informationPerPeer(descriptionSearch, asNumberSearch, connectInterfaceSearch)
 
+def createDatabase(cursor, databaseName):
+  """
+  create database to insert data of gadgets
+  """
+  cursor.execute(f"CREATE DATABASE IF NOT EXISTS {databaseName}")
+  cursor.execute(f"use {databaseName}")
+
+def createTable(cursor, tableName):
+  """
+  create table to insert peer informations of gadget
+  """
+  createTable = f"""CREATE TABLE IF NOT EXISTS {tableName} 
+                    (id                 int not null auto_increment primary key,
+                    equipamento         varchar(200),
+                    ip                  varchar(200),
+                    peer                varchar(200),
+                    as_number           varchar(200),
+                    description         varchar(200),
+                    connect_interface   varchar(200));
+             """
+  cursor.execute(createTable)
+
+def getRegistry(cursor, tableName, ip, peer):
+  """
+  get registry of gadget with ip and peer
+  """
+  verifyExistsRegistry = f""" SELECT * from {tableName}
+                              WHERE ip='{ip}' and peer='{peer}';
+                            """
+  cursor.execute(verifyExistsRegistry)
+  registry = cursor.fetchone()
+
+  return registry
+
+def createRegistry(conn, cursor, tableName, gadgetName, ip, peer, asNumber, description, connectInterface):
+  """
+  create information of gadget peer
+  """
+  createItem = f"""INSERT INTO {tableName}
+                      (equipamento, ip, peer, as_number, description, connect_interface) 
+                    VALUES
+                      ("{gadgetName}", "{ip}", "{peer}", "{asNumber}", "{description}", "{connectInterface}");
+                  """
+  cursor.execute(createItem)
+  conn.commit()
+
 def runCommands():
   """
   run three comands to get informations
@@ -146,19 +193,9 @@ def runCommands():
     else:
         cursor = conn.cursor()
       
-    cursor.execute(f"CREATE DATABASE IF NOT EXISTS {databaseName}")
-    cursor.execute(f"use {databaseName}")
+    createDatabase(cursor, databaseName)
 
-    createTable = f"""CREATE TABLE IF NOT EXISTS {tableName} 
-                    (id                 int not null auto_increment primary key,
-                    equipamento         int,
-                    ip                  varchar(200),
-                    peer                varchar(200),
-                    as_number           varchar(200),
-                    description         varchar(200),
-                    connect_interface   varchar(200));
-             """
-    cursor.execute(createTable)
+    createTable(cursor, tableName)
 
     for information in informations:
       peer = information['description']['peer']
@@ -166,32 +203,9 @@ def runCommands():
       asNumber = information['as-number']['content']
       connectInterface = information['connect-interface']['content']
       ip = gadget['ip']
+      gadgetName = gadget['equipamento']
 
-      getLastItemQuery = f"""SELECT equipamento, ip from {tableName}
-                            ORDER BY id DESC LIMIT 1;
-                        """
-      cursor.execute(getLastItemQuery)
-      lastItem = cursor.fetchone()
-      lastGadgetIndex = int(1)
-
-      getGadgetIndexIfGadgetIpExists = f""" SELECT equipamento from {tableName}
-                                  WHERE ip='{ip}'
-                                  LIMIT 0, 1;
-                            """
-      cursor.execute(getGadgetIndexIfGadgetIpExists)
-      ipOfGadgetInDatabase = cursor.fetchone()
-
-      if lastItem != None:
-        if ipOfGadgetInDatabase != None:
-          lastGadgetIndex = int(ipOfGadgetInDatabase[0])
-        else:
-          lastGadgetIndex = int(lastItem[0]) + 1
-
-      verifyExistsRegistry = f""" SELECT * from {tableName}
-                                  WHERE ip='{ip}' and peer='{peer}';
-                            """
-      cursor.execute(verifyExistsRegistry)
-      registry = cursor.fetchone()
+      registry = getRegistry(cursor, tableName, ip, peer)
 
       if registry != None:
         registryAsNumber = registry[4]
@@ -209,13 +223,7 @@ def runCommands():
 
         continue
 
-      createItem = f"""INSERT INTO {tableName}
-                      (equipamento, ip, peer, as_number, description, connect_interface) 
-                    VALUES
-                      ({lastGadgetIndex}, "{ip}", "{peer}", "{asNumber}", "{description}", "{connectInterface}");
-                  """
-      cursor.execute(createItem)
-      conn.commit()
+      createRegistry(conn, cursor, tableName, gadgetName, ip, peer, asNumber, description, connectInterface)
 
     print('dados atualizados')  
     
