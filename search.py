@@ -151,6 +151,17 @@ def alterTable(cursor, tableName):
                   """
   cursor.execute(alterTableQuery)
 
+def alterGadgetFieldToGadgetName(cursor, tableName, gadgetName, ip):
+  """
+  alter 'equipamento' from int to varchar value of gadget['name'] content
+  """
+
+  alterGadgetFieldToGadgetName = f"""UPDATE {tableName}
+                                    set equipamento='{gadgetName}'
+                                    WHERE ip='{ip}';
+                                  """
+  cursor.execute(alterGadgetFieldToGadgetName)
+
 def getRegistry(cursor, tableName, ip, peer):
   """
   get registry of gadget with ip and peer
@@ -184,7 +195,6 @@ def runCommands():
     command = f'snmpwalk -v2c -c {gadget["community"]} {gadget["ip"]} iso.3.6.1.4.1.2011.5.25.191.2.1.1.8 | grep peer'
     
     informations = runRoutine(command)
-    # print(informations)
 
     databaseName = 'sw_hws6730'
     tableName = 'equipamentos'
@@ -207,6 +217,8 @@ def runCommands():
     createTable(cursor, tableName)
 
     alterTable(cursor, tableName)
+
+    alterGadgetFieldToGadgetName(cursor, tableName, gadget['equipamento'], gadget['ip'])
 
     for information in informations:
       peer = information['description']['peer']
