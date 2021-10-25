@@ -151,7 +151,7 @@ def alterTable(cursor, tableName):
                   """
   cursor.execute(alterTableQuery)
 
-def alterGadgetFieldToGadgetName(cursor, tableName, gadgetName, ip):
+def alterGadgetFieldToGadgetName(connection, cursor, tableName, gadgetName, ip):
   """
   alter 'equipamento' from int to varchar value of gadget['name'] content
   """
@@ -161,6 +161,7 @@ def alterGadgetFieldToGadgetName(cursor, tableName, gadgetName, ip):
                                     WHERE ip='{ip}';
                                   """
   cursor.execute(alterGadgetFieldToGadgetName)
+  connection.commit()
 
 def getRegistry(cursor, tableName, ip, peer):
   """
@@ -185,6 +186,32 @@ def createRegistry(conn, cursor, tableName, gadgetName, ip, peer, asNumber, desc
                   """
   cursor.execute(createItem)
   conn.commit()
+
+def removeInformationsUnused(connection, cursor, tableName, informationsArray):
+  """
+  if one information excluded of snmp, remove of database
+  """
+  getRegistryWithPeer = f"SELECT peer, id from {tableName};"
+  cursor.execute(getRegistryWithPeer)
+  rows = cursor.fetchall()
+
+  for information in informationsArray:
+    peer = information['description']['peer']
+
+    havePeer = False
+    for row in rows:
+      rowPeer = row[0]
+      rowID = row[1]
+      
+      if rowPeer == peer:
+        havePeer = True
+
+    if havePeer == False:
+      removeRegistryUnused = f"""DELETE FROM {tableName}
+                                WHERE id='{rowID}'
+                              """
+      cursor.execute(removeRegistryUnused)
+      connection.commit()
 
 def runCommands():
   """
@@ -218,7 +245,7 @@ def runCommands():
 
     alterTable(cursor, tableName)
 
-    alterGadgetFieldToGadgetName(cursor, tableName, gadget['equipamento'], gadget['ip'])
+    alterGadgetFieldToGadgetName(conn, cursor, tableName, gadget['equipamento'], gadget['ip'])
 
     for information in informations:
       peer = information['description']['peer']
@@ -247,6 +274,8 @@ def runCommands():
         continue
 
       createRegistry(conn, cursor, tableName, gadgetName, ip, peer, asNumber, description, connectInterface)
+
+    removeInformationsUnused(conn, cursor, tableName, informations)
 
     print('dados atualizados')  
     
